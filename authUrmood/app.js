@@ -34,24 +34,34 @@ app.post('/register', registerValidation, (req, res) => {
     if (!errors.isEmpty()) {
         return res.status(400).json({errors: errors.array() });
     }
-
-    //encryption password with bcrypt
-    bcrypt.hash(password, 10, (err, hashedPassword) => {
+    
+    //check email already exist or not
+    const sql = 'SELECT * FROM users WHERE email = ?';
+    db.query(sql, [email], (err, result) => {
         if (err) {
-            console.error('Failed to encrypt the password:', err);
-            return res.status(500).json({ error: 'Registration failed'});
+            console.error('Registration failed: '. err);
+            return res.status(500).json({error: 'Registration failed'});
+        }  
+                                        
+        if (result.length > 0) {
+                return res.status(400).json({error: 'Email already exist'});
         }
-
-        const sql = 'INSERT INTO users (fullname, email, password) VALUES (?, ?, ?)';
-        db.query(sql, [fullname, email, hashedPassword], (err, result) => {
+        //encryption password with bcrypt
+        bcrypt.hash(password, 10, (err, hashedPassword) => {
             if (err) {
-                console.error('Registration failed: ', err);
-                return res.status(500).json({error: 'Registration failed'});
+                console.error('Failed to encrypt the password:', err);
+                return res.status(500).json({ error: 'Registration failed'});
             }
-            return res.status(200).json({message: 'Registration successful'});
+            const sql = 'INSERT INTO users (fullname, email, password) VALUES (?, ?, ?)';
+            db.query(sql, [fullname, email, hashedPassword], (err, result) => {
+                if (err) {
+                    console.error('Registration failed: ', err);
+                    return res.status(500).json({error: 'Registration failed'});
+                }
+                return res.status(200).json({message: 'Registration successful'});
+            });
         });
     });
-
 });
 
 //Validation Input login endpoint
@@ -77,7 +87,7 @@ app.post('/login', (req, res) => {
         }
 
         if (result.length === 0) {
-            return res.status(401).json({error: 'Incorrect email or password'});
+            return res.status(401).json({error: 'Please register first.'});
         }
 
         const user = result[0];

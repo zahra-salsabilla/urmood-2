@@ -2,33 +2,21 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const db = require('./db');
-const jwt = require ('jsonwebtoken');
+//const jwt = require ('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { body, validationResult} = require('express-validator');
-
-//secret key untuk JWT
-const secretKey = process.env.SECRET_KEY;
+//const secretKey = process.env.SECRET_KEY;
 
 app.use(express.json());
+const port = process.env.PORT || 4000;
 
-//Middleware untuk memverifikasi token di setiap permintaan otentikasi
-function authenticateToken(req, res, next) {
-    const token = req.headers['Authorization'];
+app.listen(port, () => {
+    console.log(`app listening in port ${port}`);
+});
 
-    if (!token) {
-        return res.status(401).json({error: 'No token'});
-    }
-
-    jwt.verify(token, secretKey, (err, decoded) => {
-        if (err) {
-            console.error('Token not valid: ', err);
-            return res.status(403).json({error: 'Token not Valid'});
-        }
-
-        req.userId = decoded.userId;
-        next();
-    });
-}
+app.get('/', (req, res) => {
+    res.send( "connect");
+});
 
 //Validation Input register endpoint
 const registerValidation = [
@@ -63,6 +51,7 @@ app.post('/register', registerValidation, (req, res) => {
             return res.status(200).json({message: 'Registration successful'});
         });
     });
+
 });
 
 //Validation Input login endpoint
@@ -71,7 +60,7 @@ const loginValidation = [
     body('password', 'Password required').notEmpty().isLength({min: 8}).withMessage('Password at least 6 characters'),
 ];
 
-app.post('/login', loginValidation, (req, res) => {
+app.post('/login', (req, res) => {
     const {email, password} = req.body;
 
     //validation check
@@ -103,44 +92,44 @@ app.post('/login', loginValidation, (req, res) => {
                 return res.status(401).json({error: 'Incorrect email or password'});
             }
 
-            //make JWT token
-            const token = jwt.sign({userId: user.id}, process.env.SECRET_KEY, {expiresIn: '1h'});
-
             //send token as response
             return res.status(200).json({
                 message: 'Login successful',
-                token: token
+                //token: token
             });
         });
     });
 });
 
-//get users data
-app.get('/users/:id', authenticateToken, (req, res) => {
-    const userId = req.userId;
+//logout user
+app.post('/logout', (req, res) => {
+    const {Idusers} = req.body.Idusers;
+    const sql = `DELETE FROM users WHERE Idusers = ?`;
 
-    //take users data by userId
-    const sql = 'SELECT * FROM users WHERE id = ?';
-    db.query(sql, [userId], (err, result) => {
-        if (err) {
-            console.error('Failed to retrieve user data:', err);
-            return res.status(500).json({error: 'Failed to retrieve user data'});
-        }
+    db.query(sql, [Idusers], (err, result) => {
+        if (err){
+            return res.status(500).json({error:'Logout failed'});
+        } 
 
-        if (result.length === 0) {
-            return res.status(404).json({error: 'User data not found'});
-        }
-
-        const user = result[0];
-
-        //send users data as response
         return res.status(200).json({
-            message:'Successfully retrieve user data',
-            user: user
+            message: 'Logout successful',
         });
-    });
+        
+    })
 });
 
-app.listen(3000, () => {
-    console.log('Server running on port 3000');
-});
+//get users data by name
+app.get('/usersdata', (req, res) => {
+    const { fullname } = req.query;
+  
+    db.query('SELECT * FROM users WHERE fullname LIKE ?',
+       [`%${fullname}%`], (error, results) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ message: 'server error' });
+        } else {
+          res.json({ users: results });
+        }
+      }
+    );
+  });

@@ -22,6 +22,7 @@ This repository contains 3 branches:
 
 1. Node.js: v18.13.0
 2. Google Cloud Platform
+3. Postman (testing the API endpoints)
 
 # Contact
 For further information:
@@ -40,6 +41,6 @@ Here are some steps to deploy it:
 6. Test the connection by clicking on the endpoint link
 
 # Documentation
-Read the detail of API documentation on:
+Read the details of API documentation on:
 https://documenter.getpostman.com/view/26401567/2s93mBwJSP
 

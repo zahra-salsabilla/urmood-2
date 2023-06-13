@@ -28,7 +28,7 @@ This repository contains 3 branches:
 For further information:
 
 1. laninastrid@gmail.com (Lanina Astrid Chrysant Vrij)
-2. @gmail.com (Zahra Salsabilla)
+2. zsalsabilla1104@gmail.com (Zahra Salsabilla)
 
 # How to deploy
 To use these endpoint, you should deploy the API using Cloud Run and connect it to Cloud SQL in Google Cloud Platform.

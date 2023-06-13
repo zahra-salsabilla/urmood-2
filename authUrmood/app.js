@@ -2,10 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const db = require('./db');
-//const jwt = require ('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { body, validationResult} = require('express-validator');
-//const secretKey = process.env.SECRET_KEY;
 
 app.use(express.json());
 const port = process.env.PORT || 4000;
@@ -70,7 +68,7 @@ const loginValidation = [
     body('password', 'Password required').notEmpty().isLength({min: 8}).withMessage('Password at least 6 characters'),
 ];
 
-app.post('/login', (req, res) => {
+app.post('/login', loginValidation, (req, res) => {
     const {email, password} = req.body;
 
     //validation check
@@ -113,33 +111,36 @@ app.post('/login', (req, res) => {
 
 //logout user
 app.post('/logout', (req, res) => {
-    const {Idusers} = req.body.Idusers;
-    const sql = `DELETE FROM users WHERE Idusers = ?`;
+    const { email } = req.query;
+    const sql = 'DELETE FROM users WHERE email = ?';
 
-    db.query(sql, [Idusers], (err, result) => {
-        if (err){
-            return res.status(500).json({error:'Logout failed'});
+    db.query(sql, [`%${email}%`], (error, results) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json({ message: 'Logout failed' });
         } 
-
+        
         return res.status(200).json({
             message: 'Logout successful',
         });
-        
-    })
+    });
 });
 
-//get users data by name
+
+//get users data by email
 app.get('/usersdata', (req, res) => {
-    const { fullname } = req.query;
-  
-    db.query('SELECT * FROM users WHERE fullname LIKE ?',
-       [`%${fullname}%`], (error, results) => {
+    const { email } = req.query;
+    const sql = 'SELECT * FROM users WHERE email LIKE ?';
+
+    db.query(sql , [`%${email}%`], (error, results) => {
         if (error) {
-          console.error(error);
-          res.status(500).json({ message: 'server error' });
-        } else {
-          res.json({ users: results });
+            console.error(error);
+            res.status(500).json({ message: 'server error' });
+        } 
+        
+        return res.status(200).json({
+            users: results,
+        });
         }
-      }
     );
-  });
+});
